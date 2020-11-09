@@ -9,6 +9,7 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
+#include <condition_variable>
 
 using namespace std;
 
@@ -39,16 +40,26 @@ class Semaphore;
 Bridge *bridges;
 Taxi *taxis;
 Island *islands;
+Semaphore* s;
 
 class Semaphore
 {
 private:
 	int N;
 	mutex m;
+	condition_variable condition;
 public:
 	Semaphore(int nb) { N = nb; };
-	void P(int nb = 1) {}; // Decrement the semaphore count by nb and wait if needed.
-	void V(int nb =1) {}; // Increment the semaphore count by nb.
+	void P(int nb = 1) {
+		std::unique_lock<std::mutex> lock(m);
+		if (N - nb < 0) 
+			condition.wait(lock);
+	}; // Decrement the semaphore count by nb and wait if needed.
+	void V(int nb = 1) {
+		std::unique_lock<std::mutex> lock(m);
+		// Start a waiting thread if required.
+		if (N + nb <= 0) condition.notify_one();
+	}; // Increment the semaphore count by nb.
 };
 
 
@@ -58,16 +69,27 @@ private:
 	int nbPeople; //People that will take a taxi to travel somewhere
 	int peopleDropped; //People that will take a taxi to travel somewhere
 public:
-	int GetNB_PEOPLEeople() { return nbPeople; }
+	int GetNbPeople() { return nbPeople; }
 	int GetNbDroppedPeople() { return peopleDropped; }
 	Island() { nbPeople = NB_PEOPLE; peopleDropped = 0; };
 	int GetOnePassenger()
 	{
-		//Complete this function. returns the number of passengers picked up. (0 or 1)
-		return false;
+		s = new Semaphore(1);
+		s->P();
+		if (nbPeople - 1 > 0) {
+			--nbPeople;
+			s->V();
+			return 1;
+		}
+		s->V();
+		return 0;
 	}
-	void DropOnePassenger() //Complete this function. 
+	void DropOnePassenger()
 	{
+		s = new Semaphore(1);
+		s->P();
+		++peopleDropped;
+		s->V();
 	}
 };
 
@@ -131,14 +153,21 @@ public:
 			}
 		if (cpt > 0)
 		{
-			printf("Taxi %d has dropped %d clients on island %d.\n", GetId(), cpt, location);
+			printf("Taxi %d has taken %d clients from island %d.\n", GetId(), cpt, location);
 		}
 	}
 
 	void DropPassengers()
 	{
 		int cpt = 0;
-		//to be completed
+		for (int i = 0; i < 4; i++)
+		{
+			if (i == location) {
+				islands[location].DropOnePassenger();
+				dest[i] = -1;
+				++cpt;
+			}
+		}
 		printf("Taxi %d has dropped %d clients on island %d.\n", GetId(), cpt, location);
 	}
 
@@ -158,6 +187,7 @@ bool NotEnd()  //this function is already completed
 	int sum = 0;
 	for (int i = 0; i < NB_ISLANDS; i++)
 		sum += islands[i].GetNbDroppedPeople();
+	printf("Dropped  %d.\n", sum);
 	return sum != NB_PEOPLE * NB_ISLANDS;
 }
 
@@ -208,7 +238,7 @@ int main(int argc, char* argv[])
 	InitClock();
 	RunTaxisUntilWorkIsDone();
 	printf("Taxis have completed!\n ");
-	PrintTime_ms("Fibo time multithreaded:");
+	PrintTime_ms("Time multithreaded:");
 	DeleteResources();
 	return 0;
 }
