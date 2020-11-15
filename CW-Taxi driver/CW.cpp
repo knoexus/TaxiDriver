@@ -40,7 +40,6 @@ class Semaphore;
 Bridge *bridges;
 Taxi *taxis;
 Island *islands;
-Semaphore* s;
 
 class Semaphore
 {
@@ -52,13 +51,14 @@ public:
 	Semaphore(int nb) { N = nb; };
 	void P(int nb = 1) {
 		std::unique_lock<std::mutex> lock(m);
-		if (N - nb < 0) 
-			condition.wait(lock);
+		condition.wait(lock, [this, nb](){ return N - nb >= 0; });
+		N -= nb;
 	}; // Decrement the semaphore count by nb and wait if needed.
 	void V(int nb = 1) {
 		std::unique_lock<std::mutex> lock(m);
 		// Start a waiting thread if required.
-		if (N + nb <= 0) condition.notify_one();
+		N += nb;
+		condition.notify_one();
 	}; // Increment the semaphore count by nb.
 };
 
@@ -68,28 +68,28 @@ class Island
 private:
 	int nbPeople; //People that will take a taxi to travel somewhere
 	int peopleDropped; //People that will take a taxi to travel somewhere
+	Semaphore* snp;
+	Semaphore* pdr;
 public:
 	int GetNbPeople() { return nbPeople; }
 	int GetNbDroppedPeople() { return peopleDropped; }
-	Island() { nbPeople = NB_PEOPLE; peopleDropped = 0; };
+	Island() { nbPeople = NB_PEOPLE; peopleDropped = 0; snp = new Semaphore(1); pdr = new Semaphore(1); };
 	int GetOnePassenger()
 	{
-		s = new Semaphore(1);
-		s->P();
+		snp->P();
 		if (nbPeople - 1 > 0) {
-			--nbPeople;
-			s->V();
+			nbPeople--;
+			snp->V();
 			return 1;
 		}
-		s->V();
+		snp->V();
 		return 0;
 	}
 	void DropOnePassenger()
 	{
-		s = new Semaphore(1);
-		s->P();
-		++peopleDropped;
-		s->V();
+		pdr->P();
+		peopleDropped++;
+		pdr->V();
 	}
 };
 
@@ -117,8 +117,9 @@ private:
 	int location; //island location
 	int dest[4] = { -1,-1,-1,-1 }; //Destination of the people taken; -1 for seat is empty
 	int GetId() { return this - taxis; }; //a hack to get the taxi thread id; Better would be to pass id throught the constructor
+	Semaphore* b;
 public:
-	Taxi() { location = rand()%NB_ISLANDS; };
+	Taxi() { location = rand() % NB_ISLANDS; b = new Semaphore(1);  };
 
 	void GetNewLocationAndBridge(int &location, int &bridge) 		//find a randomn bridge and returns the island on the other side;
 	{
@@ -165,7 +166,7 @@ public:
 			if (i == location) {
 				islands[location].DropOnePassenger();
 				dest[i] = -1;
-				++cpt;
+				cpt++;
 			}
 		}
 		printf("Taxi %d has dropped %d clients on island %d.\n", GetId(), cpt, location);
@@ -174,7 +175,9 @@ public:
 	void CrossBridge() 
 	{
 		int bridge;
+		b->P();
 		GetNewLocationAndBridge(location,bridge);
+		b->V();
 		//Get the right to cross the bridge
 	}
 };
@@ -187,7 +190,6 @@ bool NotEnd()  //this function is already completed
 	int sum = 0;
 	for (int i = 0; i < NB_ISLANDS; i++)
 		sum += islands[i].GetNbDroppedPeople();
-	printf("Dropped  %d.\n", sum);
 	return sum != NB_PEOPLE * NB_ISLANDS;
 }
 
