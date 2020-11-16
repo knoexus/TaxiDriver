@@ -119,7 +119,7 @@ private:
 	int GetId() { return this - taxis; }; //a hack to get the taxi thread id; Better would be to pass id throught the constructor
 	Semaphore* b;
 public:
-	Taxi() { location = rand() % NB_ISLANDS; b = new Semaphore(4); };
+	Taxi() { location = rand() % NB_ISLANDS; b = new Semaphore(2); };
 
 	void GetNewLocationAndBridge(int &location, int &bridge) 		//find a randomn bridge and returns the island on the other side;
 	{
@@ -177,6 +177,12 @@ public:
 		int bridge;
 		GetNewLocationAndBridge(location,bridge);
 		//Get the right to cross the bridge
+		b->P();
+		int source = bridges[bridge].GetSource();
+		int dest = bridges[bridge].GetDest();
+		bridges[bridge].SetSource(dest);
+		bridges[bridge].SetDest(source);
+		b->V();
 	}
 };
 
