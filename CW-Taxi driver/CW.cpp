@@ -1,6 +1,6 @@
 // main.cpp : Defines the entry point for the console application.
-// My name:
-// My student id:
+// My name: Anton Dementyev
+// My student id: 2023638
 
 #include <chrono>
 #include <thread>
@@ -119,7 +119,7 @@ private:
 	int GetId() { return this - taxis; }; //a hack to get the taxi thread id; Better would be to pass id throught the constructor
 	Semaphore* b;
 public:
-	Taxi() { location = rand() % NB_ISLANDS; b = new Semaphore(1);  };
+	Taxi() { location = rand() % NB_ISLANDS; b = new Semaphore(4); };
 
 	void GetNewLocationAndBridge(int &location, int &bridge) 		//find a randomn bridge and returns the island on the other side;
 	{
@@ -175,9 +175,7 @@ public:
 	void CrossBridge() 
 	{
 		int bridge;
-		b->P();
 		GetNewLocationAndBridge(location,bridge);
-		b->V();
 		//Get the right to cross the bridge
 	}
 };
