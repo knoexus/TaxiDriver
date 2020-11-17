@@ -118,8 +118,10 @@ private:
 	int dest[4] = { -1,-1,-1,-1 }; //Destination of the people taken; -1 for seat is empty
 	int GetId() { return this - taxis; }; //a hack to get the taxi thread id; Better would be to pass id throught the constructor
 	Semaphore* b;
+	Semaphore* ifwd;
+	Semaphore* ibwd;
 public:
-	Taxi() { location = rand() % NB_ISLANDS; b = new Semaphore(2); };
+	Taxi() { location = rand() % NB_ISLANDS; b = new Semaphore(2); ifwd = new Semaphore(4), ibwd = new Semaphore(4); };
 
 	void GetNewLocationAndBridge(int &location, int &bridge) 		//find a randomn bridge and returns the island on the other side;
 	{
@@ -184,6 +186,28 @@ public:
 		bridges[bridge].SetDest(source);
 		b->V();
 	}
+
+	void CrossBridgeIncreasedThroughput() {
+		int bridge;
+		GetNewLocationAndBridge(location, bridge);
+		//Get the right to cross the bridge
+		auto cross = [&](int b) {
+			int source = bridges[b].GetSource();
+			int dest = bridges[b].GetDest();
+			bridges[b].SetSource(dest);
+			bridges[b].SetDest(source);
+		};
+		if (bridges[bridge].GetSource() == location) {
+			ifwd->P();
+			cross(bridge);
+			ifwd->V();
+		}
+		if (bridges[bridge].GetDest() == location) {
+			ibwd->P();
+			cross(bridge);
+			ibwd->V();
+		}
+	}
 };
 
 
@@ -202,7 +226,7 @@ void TaxiThread(int id)  //this function is already completed
 	while (NotEnd())
 	{
 		taxis[id].GetPassengers();
-		taxis[id].CrossBridge();
+		taxis[id].CrossBridgeIncreasedThroughput();
 		taxis[id].DropPassengers();
 	}
 }
