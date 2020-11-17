@@ -214,13 +214,13 @@ public:
 //code for running the taxis
 //Comment here on mutual exclusion and the condition
 bool NotEnd()  //this function is already completed
-{
-	int sum = 0;
-	for (int i = 0; i < NB_ISLANDS; i++)
-		sum += islands[i].GetNbDroppedPeople();
-	return sum != NB_PEOPLE * NB_ISLANDS;
-}
-
+{															// *** Termination Criterion ***
+	int sum = 0;											// There's no need to put accessing nbDroppedPeople or more code inside a critical section,
+	for (int i = 0; i < NB_ISLANDS; i++)					// because a) we aren't modifying the field nbDroppedPeople of an Island, but just 
+		sum += islands[i].GetNbDroppedPeople();				// performing a read to get its current value; b) we don't care whether it's being accessed
+	return sum != NB_PEOPLE * NB_ISLANDS;					// or modified by other threads / taxis at the moment of calling GetNbDroppedPeople,
+}															// because again, we simply need the value of it at the same exact moment, hence race condition
+															// is out of question here.
 void TaxiThread(int id)  //this function is already completed
 {
 	while (NotEnd())
