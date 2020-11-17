@@ -201,8 +201,8 @@ public:
 			ifwd->P();
 			cross(bridge);
 			ifwd->V();
-		}
-		if (bridges[bridge].GetDest() == location) {
+		} 
+		else if (bridges[bridge].GetDest() == location) {
 			ibwd->P();
 			cross(bridge);
 			ibwd->V();
