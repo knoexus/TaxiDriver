@@ -28,8 +28,8 @@ void PrintTime_ms(std::string text)
 
 #define NB_ISLANDS 50 //number of islands
 #define NB_BRIDGES 100 //number of bridges
-#define NB_TAXIS 1000 //number of taxis
-#define NB_PEOPLE 5000 //number of people per island
+#define NB_TAXIS 20 //number of taxis
+#define NB_PEOPLE 40 //number of people per island
 
 class Bridge;
 class Person;
@@ -216,8 +216,7 @@ public:
 		//Get the right to cross the bridge
 		if (bridges[bridge].GetSource() == location)
 			bridges[bridge].CrossFWD();
-
-		if (bridges[bridge].GetDest() == location)
+		else if (bridges[bridge].GetDest() == location)
 			bridges[bridge].CrossBWD();
 	}
 };
