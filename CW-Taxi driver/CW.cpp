@@ -46,19 +46,18 @@ class Semaphore
 private:
 	int N;
 	mutex m;
-	condition_variable condition;
+	condition_variable c;
 public:
 	Semaphore(int nb) { N = nb; };
 	void P(int nb = 1) {
-		std::unique_lock<std::mutex> lock(m);
-		condition.wait(lock, [this, nb](){ return N - nb >= 0; });
+		std::unique_lock<std::mutex> lck(m);
+		c.wait(lck, [this, nb](){ return N >= nb; });
 		N -= nb;
 	}; // Decrement the semaphore count by nb and wait if needed.
 	void V(int nb = 1) {
-		std::unique_lock<std::mutex> lock(m);
-		// Start a waiting thread if required.
+		std::unique_lock<std::mutex> lck(m);
 		N += nb;
-		condition.notify_one();
+		c.notify_one();
 	}; // Increment the semaphore count by nb.
 };
 
@@ -77,7 +76,7 @@ public:
 	int GetOnePassenger()
 	{
 		snp->P();
-		if (nbPeople - 1 > 0) {
+		if (nbPeople - 1 >= 0) {
 			nbPeople--;
 			snp->V();
 			return 1;
@@ -121,7 +120,7 @@ private:
 	Semaphore* ifwd;
 	Semaphore* ibwd;
 public:
-	Taxi() { location = rand() % NB_ISLANDS; b = new Semaphore(2); ifwd = new Semaphore(4), ibwd = new Semaphore(4); };
+	Taxi() { location = rand() % NB_ISLANDS; b = new Semaphore(2); ifwd = new Semaphore(4); ibwd = new Semaphore(4); };
 
 	void GetNewLocationAndBridge(int &location, int &bridge) 		//find a randomn bridge and returns the island on the other side;
 	{
@@ -171,7 +170,10 @@ public:
 				cpt++;
 			}
 		}
-		printf("Taxi %d has dropped %d clients on island %d.\n", GetId(), cpt, location);
+		if (cpt > 0)
+		{
+			printf("Taxi %d has dropped %d clients on island %d.\n", GetId(), cpt, location);
+		}
 	}
 
 	void CrossBridge() 
@@ -180,10 +182,7 @@ public:
 		GetNewLocationAndBridge(location,bridge);
 		//Get the right to cross the bridge
 		b->P();
-		int source = bridges[bridge].GetSource();
-		int dest = bridges[bridge].GetDest();
-		bridges[bridge].SetSource(dest);
-		bridges[bridge].SetDest(source);
+		//printf("Taxi %d is crossing bridge %d \n", GetId(), bridge);
 		b->V();
 	}
 
@@ -191,20 +190,14 @@ public:
 		int bridge;
 		GetNewLocationAndBridge(location, bridge);
 		//Get the right to cross the bridge
-		auto cross = [&](int b) {
-			int source = bridges[b].GetSource();
-			int dest = bridges[b].GetDest();
-			bridges[b].SetSource(dest);
-			bridges[b].SetDest(source);
-		};
 		if (bridges[bridge].GetSource() == location) {
 			ifwd->P();
-			cross(bridge);
+			//printf("Taxi %d is crossing bridge %d southbound lane \n", GetId(), bridge);
 			ifwd->V();
 		} 
 		else if (bridges[bridge].GetDest() == location) {
 			ibwd->P();
-			cross(bridge);
+			//printf("Taxi %d is crossing bridge %d northbound lane \n", GetId(), bridge);
 			ibwd->V();
 		}
 	}
@@ -213,20 +206,26 @@ public:
 
 //code for running the taxis
 //Comment here on mutual exclusion and the condition
+// *** Termination Criterion ***
+// There's no need to put accessing nbDroppedPeople or more code inside a critical section, because:
+// a) we aren't modifying the field nbDroppedPeople of an Island, but just  performing a read to get its current value;
+// b) we don't care whether it's being accessed modified by other threads / taxis at the moment of calling GetNbDroppedPeople,
+// because again, we simply need the value of it at the same exact moment, hence race condition is out of question here.
+// *** ********************* ***
 bool NotEnd()  //this function is already completed
-{															// *** Termination Criterion ***
-	int sum = 0;											// There's no need to put accessing nbDroppedPeople or more code inside a critical section,
-	for (int i = 0; i < NB_ISLANDS; i++)					// because a) we aren't modifying the field nbDroppedPeople of an Island, but just 
-		sum += islands[i].GetNbDroppedPeople();				// performing a read to get its current value; b) we don't care whether it's being accessed
-	return sum != NB_PEOPLE * NB_ISLANDS;					// or modified by other threads / taxis at the moment of calling GetNbDroppedPeople,
-}															// because again, we simply need the value of it at the same exact moment, hence race condition
-															// is out of question here.
+{															
+	int sum = 0;											
+	for (int i = 0; i < NB_ISLANDS; i++)					
+		sum += islands[i].GetNbDroppedPeople();				
+	return sum != NB_PEOPLE * NB_ISLANDS;				
+}															
+													
 void TaxiThread(int id)  //this function is already completed
 {
 	while (NotEnd())
 	{
 		taxis[id].GetPassengers();
-		taxis[id].CrossBridgeIncreasedThroughput();
+		taxis[id].CrossBridge();
 		taxis[id].DropPassengers();
 	}
 }
