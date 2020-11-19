@@ -72,7 +72,7 @@ private:
 public:
 	int GetNbPeople() { return nbPeople; }
 	int GetNbDroppedPeople() { return peopleDropped; }
-	Island() { nbPeople = NB_PEOPLE; peopleDropped = 0; snp = new Semaphore(1); pdr = new Semaphore(1); };
+	Island() { nbPeople = NB_PEOPLE; peopleDropped = 0; snp = new Semaphore(1); pdr = new Semaphore(1); }; // semaphores are destroyed along with the island
 	int GetOnePassenger()
 	{
 		snp->P();
@@ -231,10 +231,10 @@ public:
 //code for running the taxis
 //Comment here on mutual exclusion and the condition
 // *** Termination Criterion ***
-// There's no need to put accessing nbDroppedPeople or more code inside a critical section, because:
-// a) we aren't modifying the field nbDroppedPeople of an Island, but just  performing a read to get its current value;
+// There's no need to put this whole function or accessing nbDroppedPeople inside a critical section, because:
+// a) we aren't modifying the field nbDroppedPeople of an Island, but just performing a read to get its current value;
 // b) we don't care whether it's being accessed modified by other threads / taxis at the moment of calling GetNbDroppedPeople,
-// because again, we simply need the value of it at the same exact moment, hence race condition is out of question here.
+// because again, we simply need the value of it at the same exact moment to increase sum, hence race condition is out of question here.
 // *** ********************* ***
 bool NotEnd()  //this function is already completed
 {															
