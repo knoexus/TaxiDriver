@@ -141,11 +141,8 @@ private:
 	int location; //island location
 	int dest[4] = { -1,-1,-1,-1 }; //Destination of the people taken; -1 for seat is empty
 	int GetId() { return this - taxis; }; //a hack to get the taxi thread id; Better would be to pass id throught the constructor
-	Semaphore* b;
-	Semaphore* ifwd;
-	Semaphore* ibwd;
 public:
-	Taxi() { location = rand() % NB_ISLANDS; b = new Semaphore(2); ifwd = new Semaphore(4); ibwd = new Semaphore(4); };
+	Taxi() { location = rand() % NB_ISLANDS; };
 
 	void GetNewLocationAndBridge(int &location, int &bridge) 		//find a randomn bridge and returns the island on the other side;
 	{
