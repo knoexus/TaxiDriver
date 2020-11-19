@@ -97,8 +97,8 @@ class Bridge
 private:
 	int source, dest;
 	Semaphore* twoLane;
-	Semaphore* fourLaneFwd;
-	Semaphore* fourLaneBwd;
+	Semaphore* eightLaneFwd;
+	Semaphore* eightLaneBwd;
 public:
 	Bridge() 
 	{ 
@@ -107,8 +107,8 @@ public:
 			dest = rand() % NB_ISLANDS; 
 		while (dest == source); 
 		twoLane = new Semaphore(2);
-		fourLaneFwd = new Semaphore(4);
-		fourLaneBwd = new Semaphore(4);
+		eightLaneFwd = new Semaphore(4);
+		eightLaneBwd = new Semaphore(4);
 	};
 	int GetSource() { return source; };
 	int GetDest() { return dest; };
@@ -123,15 +123,15 @@ public:
 	}
 	void CrossFWD(bool &cc)
 	{
-		fourLaneFwd->P();
+		eightLaneFwd->P();
 		cc = true;
-		fourLaneFwd->V();
+		eightLaneFwd->V();
 	}
 	void CrossBWD(bool &cc)
 	{
-		fourLaneBwd->P();
+		eightLaneBwd->P();
 		cc = true;
-		fourLaneBwd->V();
+		eightLaneBwd->V();
 	}
 };
 
