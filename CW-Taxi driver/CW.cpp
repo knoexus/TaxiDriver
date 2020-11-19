@@ -96,6 +96,9 @@ class Bridge
 {
 private:
 	int source, dest;
+	Semaphore* twoLane;
+	Semaphore* fourLaneFwd;
+	Semaphore* fourLaneBwd;
 public:
 	Bridge() 
 	{ 
@@ -103,11 +106,33 @@ public:
 		do 
 			dest = rand() % NB_ISLANDS; 
 		while (dest == source); 
+		twoLane = new Semaphore(2);
+		fourLaneFwd = new Semaphore(4);
+		fourLaneBwd = new Semaphore(4);
 	};
 	int GetSource() { return source; };
 	int GetDest() { return dest; };
 	void SetSource(int v) { source=v; };
 	void SetDest(int v) { dest=v; };
+	// crossing logic put here instead of Taxi
+	void Cross(bool cc)
+	{
+		twoLane->P();
+		cc = true;
+		twoLane->V();
+	}
+	void CrossFWD(bool cc)
+	{
+		fourLaneFwd->P();
+		cc = true;
+		fourLaneFwd->V();
+	}
+	void CrossBWD(bool cc)
+	{
+		fourLaneBwd->P();
+		cc = true;
+		fourLaneBwd->V();
+	}
 };
 
 class Taxi
@@ -181,9 +206,9 @@ public:
 		int bridge;
 		GetNewLocationAndBridge(location,bridge);
 		//Get the right to cross the bridge
-		b->P();
-		//printf("Taxi %d is crossing bridge %d \n", GetId(), bridge);
-		b->V();
+		bool canCross = false;
+		while(canCross)
+			bridges[bridge].Cross(canCross);
 	}
 
 	void CrossBridgeIncreasedThroughput() {
@@ -191,14 +216,14 @@ public:
 		GetNewLocationAndBridge(location, bridge);
 		//Get the right to cross the bridge
 		if (bridges[bridge].GetSource() == location) {
-			ifwd->P();
-			//printf("Taxi %d is crossing bridge %d southbound lane \n", GetId(), bridge);
-			ifwd->V();
-		} 
+			bool canCross = false;
+			while (canCross)
+				bridges[bridge].CrossFWD(canCross);
+		}
 		else if (bridges[bridge].GetDest() == location) {
-			ibwd->P();
-			//printf("Taxi %d is crossing bridge %d northbound lane \n", GetId(), bridge);
-			ibwd->V();
+			bool canCross = false;
+			while (canCross)
+				bridges[bridge].CrossBWD(canCross);
 		}
 	}
 };
