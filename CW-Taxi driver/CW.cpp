@@ -76,7 +76,7 @@ public:
 	int GetOnePassenger()
 	{
 		snp->P();
-		if (nbPeople - 1 >= 0) {
+		if (nbPeople > 0) {
 			nbPeople--;
 			snp->V();
 			return 1;
