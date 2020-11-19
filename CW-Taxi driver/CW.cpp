@@ -204,8 +204,9 @@ public:
 		GetNewLocationAndBridge(location,bridge);
 		//Get the right to cross the bridge
 		bool canCross = false;
-		while(canCross)
+		do
 			bridges[bridge].Cross(canCross);
+		while (!canCross);
 	}
 
 	void CrossBridgeIncreasedThroughput() {
@@ -214,12 +215,14 @@ public:
 		//Get the right to cross the bridge
 		bool canCross = false;
 		if (bridges[bridge].GetSource() == location) {
-			while (canCross)
+			do
 				bridges[bridge].CrossFWD(canCross);
+			while (!canCross);
 		}
 		else if (bridges[bridge].GetDest() == location) {
-			while (canCross)
+			do
 				bridges[bridge].CrossBWD(canCross);
+			while (!canCross);
 		}
 	}
 };
