@@ -67,8 +67,8 @@ class Island
 private:
 	int nbPeople; //People that will take a taxi to travel somewhere
 	int peopleDropped; //People that will take a taxi to travel somewhere
-	Semaphore* snp;
-	Semaphore* pdr;
+	Semaphore *snp;
+	Semaphore *pdr;
 public:
 	int GetNbPeople() { return nbPeople; }
 	int GetNbDroppedPeople() { return peopleDropped; }
@@ -96,9 +96,9 @@ class Bridge
 {
 private:
 	int source, dest;
-	Semaphore* twoLane;
-	Semaphore* eightLaneFwd;
-	Semaphore* eightLaneBwd;
+	Semaphore *twoLane;
+	Semaphore *eightLaneFwd;
+	Semaphore *eightLaneBwd;
 public:
 	Bridge() 
 	{ 
