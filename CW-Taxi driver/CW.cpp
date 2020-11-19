@@ -72,7 +72,7 @@ private:
 public:
 	int GetNbPeople() { return nbPeople; }
 	int GetNbDroppedPeople() { return peopleDropped; }
-	Island() { nbPeople = NB_PEOPLE; peopleDropped = 0; snp = new Semaphore(1); pdr = new Semaphore(1); }; // semaphores are destroyed along with the island
+	Island() { nbPeople = NB_PEOPLE; peopleDropped = 0; snp = new Semaphore(1); pdr = new Semaphore(1); };
 	int GetOnePassenger()
 	{
 		snp->P();
