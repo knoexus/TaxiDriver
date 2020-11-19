@@ -114,20 +114,20 @@ public:
 	int GetDest() { return dest; };
 	void SetSource(int v) { source=v; };
 	void SetDest(int v) { dest=v; };
-	// crossing logic put here instead of Taxi
-	void Cross(bool cc)
+	// crossing mut. excl. logic is placed here instead of Taxi
+	void Cross(bool &cc)
 	{
 		twoLane->P();
 		cc = true;
 		twoLane->V();
 	}
-	void CrossFWD(bool cc)
+	void CrossFWD(bool &cc)
 	{
 		fourLaneFwd->P();
 		cc = true;
 		fourLaneFwd->V();
 	}
-	void CrossBWD(bool cc)
+	void CrossBWD(bool &cc)
 	{
 		fourLaneBwd->P();
 		cc = true;
@@ -215,13 +215,12 @@ public:
 		int bridge;
 		GetNewLocationAndBridge(location, bridge);
 		//Get the right to cross the bridge
+		bool canCross = false;
 		if (bridges[bridge].GetSource() == location) {
-			bool canCross = false;
 			while (canCross)
 				bridges[bridge].CrossFWD(canCross);
 		}
 		else if (bridges[bridge].GetDest() == location) {
-			bool canCross = false;
 			while (canCross)
 				bridges[bridge].CrossBWD(canCross);
 		}
