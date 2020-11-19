@@ -231,10 +231,11 @@ public:
 //code for running the taxis
 //Comment here on mutual exclusion and the condition
 // *** Termination Criterion ***
-// There's no need to put this whole function or accessing nbDroppedPeople inside a critical section, because:
+// There's no need to put this whole function or accessing nbDroppedPeople inside a critical section because:
 // a) we aren't modifying the field nbDroppedPeople of an Island, but just performing a read to get its current value;
-// b) we don't care whether it's being accessed modified by other threads / taxis at the moment of calling GetNbDroppedPeople,
-// because again, we simply need the value of it at the same exact moment to increase sum, hence race condition is out of question here.
+// b) we don't care whether it's being accessed or modified by other threads (taxis) at the moment of calling GetNbDroppedPeople
+// because again, we simply need the freshest value of it at the same exact moment to increase sum, hence considering 
+// 'race condition' is out of question here.
 // *** ********************* ***
 bool NotEnd()  //this function is already completed
 {															
